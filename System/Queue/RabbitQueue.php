@@ -45,6 +45,7 @@ final class RabbitQueue implements IQueue
      */
     public function push($channelName,Message $data)
     {
+        if(false == $data instanceof Message) return false;
         $this->channel = $this->connection->channel();
         $this->channel->queue_declare($channelName,false,false,false,false);
         $data = serialize($data);

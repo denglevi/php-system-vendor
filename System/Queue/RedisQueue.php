@@ -40,6 +40,7 @@ final class RedisQueue implements IQueue
     public function push($name, Message $data, $timeout = 10)
     {
         if (empty($name) || empty($data)) return false;
+        if(false == $data instanceof Message) return false;
         $data = serialize($data);
         // 加锁
         if (!$this->_redisLock->lock($queueName = "Queue-$name", $timeout)) return false;
