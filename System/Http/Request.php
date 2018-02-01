@@ -11,12 +11,12 @@ namespace System\Http;
 
 class Request
 {
-    public $get;
-    public $post;
-    public $header;
-    public $server;
-    public $cookie;
-    public $session;
+    protected $get;
+    protected $post;
+    protected $header;
+    protected $server;
+    protected $cookie;
+    protected $session;
     public $segments = [];
 
     public function __construct()
@@ -42,59 +42,56 @@ class Request
         return $instance;
     }
 
-    public function get($key = null,$default=null)
+    public function getAndPost($key = null,$value=null)
     {
-        if (is_null($key)) return $this->get;
-        if (isset($this->get[$key])) return $this->get[$key];
+        if (is_null($key) && is_null($value)) return array_merge($this->post, $this->get);
+        if (!is_null($value) && !is_null($key)) {
+            $this->post[$key] = $value;
+            $this->get[$key] = $value;
+            return true;
 
-        return $default;
+        }
+        if (!is_null($key) && is_null($value) && isset($this->post[$key])){
+            if (!isset($this->get[$key])) return $this->get[$key];
+            return $this->post($key);
+        }
+
+        if (is_null($key) && !is_null($value)) {
+            $this->post = $value;
+            $this->get = $value;
+            return true;
+        }
+
+        return false;
+
     }
 
-    public function post($key = null,$default=null)
+    public function __call($name, $arguments)
     {
-        if (is_null($key)) return $this->post;
-        if (isset($this->post[$key])) return $this->post[$key];
 
-        return $default;
-    }
+        if(!in_array($name,['post','get','header','cookie','session','server'])) return false;
 
-    public function getAndPost($key = null)
-    {
-        if (is_null($key)) return array_merge($this->post, $this->get);
-        if (!isset($this->get[$key])) return $this->get[$key];
-        return $this->post($key);
-    }
+        $key = isset($arguments[0])?$arguments[0]:null;
+        $value = isset($arguments[1])?$arguments[1]:null;
 
-    public function header($key = null,$default=null)
-    {
-        if (is_null($key)) return $this->header;
-        if (isset($this->header[$key])) return $this->header[$key];
+        $valuesRef = &$this->$name;
 
-        return $default;
-    }
+        if (is_null($key) && is_null($value)) return $valuesRef;
+        if (!is_null($value) && !is_null($key)) {
+            $valuesRef[$key] = $value;
+            return true;
+        }
 
-    public function cookie($key = null,$default=null)
-    {
-        if (is_null($key)) return $this->cookie;
-        if (isset($this->cookie[$key])) return $this->cookie[$key];
+        if (!is_null($key) && is_null($value) && isset($valuesRef[$key])) {
+            return $valuesRef[$key];
+        }
 
-        return $default;
-    }
+        if (is_null($key) && !is_null($value)) {
+            $valuesRef = $value;
+            return true;
+        }
 
-    public function session($key = null,$default=null)
-    {
-        if (is_null($key)) return $this->session;
-        if (isset($this->session[$key])) return $this->session[$key];
-
-        return $default;
-    }
-
-    public function server($key = null,$default=null)
-    {
-        if (is_null($key)) return $this->server;
-        if (isset($this->server[$key])) return $this->server[$key];
-
-        return $default;
+        return false;
     }
 
     /** 获取客户端 IP 地址 */
@@ -121,6 +118,7 @@ class Request
 
     public function pathInfo()
     {
+        var_dump($this->server);exit;
         return $this->server('PATH_INFO');
     }
 
@@ -132,5 +130,15 @@ class Request
     public function uri()
     {
         return $this->server('REQUEST_URI');
+    }
+
+    /**
+     * @param \IMiddleware $middleware
+     * @return $this
+     */
+    public function with(\IMiddleware $middleware){
+        $middleware->handle();
+
+        return $this;
     }
 }

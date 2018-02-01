@@ -66,7 +66,7 @@ class Context
             'response' => Response::class,
         ];
 
-        if(!is_a($obj = $args[0], $className = $instanceClassMap[$name])) throw new \LogicException(__CLASS__."::$name 不是一个 '$className' 对象");
+        if(!is_a($obj = $args[0], $className = $instanceClassMap[$name])) throw new \LogicException(__CLASS__."::$name 不是一个 [$className] 对象");
 
         // 设置值
         $instanceMap[$name] = $obj;

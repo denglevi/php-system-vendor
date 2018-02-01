@@ -22,7 +22,7 @@ class Route
     private $action = DEFAULT_ACTION;
 
     public function load(){
-
+        session_start();
         Context::request(Ioc::getObject('request'));
         Context::response(Ioc::getObject('response'));
         $this->parseUrl();
@@ -43,12 +43,13 @@ class Route
     }
 
     public function run(){
+//        Context::request()->with(new \AuthMiddleware());
         $actionName = $this->action;
         Context::controller()->$actionName();
     }
 
     protected function parseUrl(){
-        if(is_null($pathInfo = Request::getInstance()->server('PATH_INFO'))) return false;
+        if(is_null($pathInfo = Context::request()->server('PATH_INFO'))) return false;
 
         $pathInfoArr = explode('/',$pathInfo);
         if(SYSTEM_MODE == MULTI_MODULE or SYSTEM_MODE == MULTI_DOMAIN){

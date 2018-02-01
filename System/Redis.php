@@ -18,7 +18,8 @@ class Redis
         static $instance = null;
         if($instance == null) $instance = new RedisClient([
             'host'=>Configuration::getConfig('REDIS_HOST'),
-            'port'=>Configuration::getConfig('REDIS_PORT')
+            'port'=>Configuration::getConfig('REDIS_PORT'),
+//            'auth'=>Configuration::getConfig('REDIS_AUTH')
         ]);
         return $instance;
     }
