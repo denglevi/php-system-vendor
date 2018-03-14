@@ -8,8 +8,8 @@
 
 namespace System;
 
-use System\Http\Request;
-use System\Http\Response;
+use System\Middleware\AuthMiddleware;
+use System\Middleware\RouteMiddleware;
 
 defined('DEFAULT_MODULE') or define('DEFAULT_MODULE','Default');
 defined('DEFAULT_CONTROLLER') or define('DEFAULT_CONTROLLER','Default');
@@ -25,6 +25,7 @@ class Route
         session_start();
         Context::request(Ioc::getObject('request'));
         Context::response(Ioc::getObject('response'));
+        Context::request()->with(new RouteMiddleware());
         $this->parseUrl();
 
         if(SYSTEM_MODE == MULTI_MODULE or SYSTEM_MODE == MULTI_DOMAIN) {
@@ -36,6 +37,7 @@ class Route
         if(!class_exists($controllerClassName)) throw new \Exception('所要访问的模块['.$controllerClassName.']不存在');
         $class = new \ReflectionClass($controllerClassName);
         if(!$class->hasMethod($this->action) && !$class->getMethod($this->action)->isPublic()) throw new \Exception('所要访问的方法['.$this->action.']不存在');
+
         $controller = new $controllerClassName();
         Context::controller($controller);
 
@@ -43,9 +45,16 @@ class Route
     }
 
     public function run(){
-//        Context::request()->with(new \AuthMiddleware());
-        $actionName = $this->action;
-        Context::controller()->$actionName();
+        Context::request()->with(new AuthMiddleware());
+        $action = (new \ReflectionClass(Context::controller()))->getMethod($this->action);
+        $functionParameters = $action->getParameters();
+        $parameter = [];
+        foreach($functionParameters as $key =>$value){
+            $parameterVal = Context::request()->get($value->getName());
+            if($value->isDefaultValueAvailable() && !$parameterVal) $parameter[$value->getName()] = $value->getDefaultValue();
+            else $parameter[$value->getName()] = Context::request()->get($value->getName());
+        }
+        $action->invokeArgs(Context::controller(),$parameter);exit;
     }
 
     protected function parseUrl(){

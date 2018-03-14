@@ -92,8 +92,9 @@ class Response
         }
 
         $this->write($html);
-        if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
         $this->_ended = true;
+        if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+        else exit();
     }
 
     public function isJsonRedirect($url)

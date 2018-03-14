@@ -11,6 +11,9 @@ namespace System\Helper;
 
 class MessageHelper
 {
+    const UN_LOGIN_CODE = -5000;
+    const UN_LOGIN_MSG = '用户还未登录';
+
     const SUCCESS_MSG = '获取数据成功';
     const SUCCESS_CODE = 1000;
 

@@ -16,6 +16,10 @@ class Model extends \Illuminate\Database\Eloquent\Model
     protected $cachedTime = 0;
     protected $cachedKey = null;
 
+
+    /**
+     * @return static
+     */
     public static function getInstance(){
         static $instance;
         if(null == $instance) $instance = new static();
@@ -23,17 +27,26 @@ class Model extends \Illuminate\Database\Eloquent\Model
         return $instance;
     }
 
+    /**
+     * @return \Illuminate\Support\Collection|mixed|string
+     */
     public function get(){
         if(!$this->enableCached) return parent::get();
         if($data = Redis::getInstance()->get($this->cachedKey)) return unserialize($data);
 
         $data = parent::get();
-        if(is_null($this->cachedKey)) $this->cachedKey = sha1($this->toSql());
+        if(is_null($this->cachedKey)) $this->cachedKey = sha1($this->toSql().implode('',$this->getBindings()));
         Redis::getInstance()->set($this->cachedKey,serialize($data),null,$this->cachedTime);
 
         return $data;
     }
-    public function cache($timeout=null,$key=null){
+
+    /**
+     * @param null $timeout
+     * @param null $key
+     * @return $this
+     */
+    public function enableCached($timeout=null,$key=null){
         $this->enableCached = true;
         if(is_null($timeout) && is_null($key)){
             $this->cachedTime = Configuration::getConfig('DATA_CACHE_TIME');
@@ -48,5 +61,23 @@ class Model extends \Illuminate\Database\Eloquent\Model
         }
 
         return $this;
+    }
+
+    /**
+     * @param $str
+     * @param $bindData
+     * @param string $mark
+     * @return string
+     */
+    protected function dumpSql($str,$bindData,$mark='?'){
+
+        if(!$position = stripos($str,$mark)) {return $str;}
+        $headStr = substr($str,0,$position);
+        $footStr = substr($str,$position+1);
+        $val = array_shift($bindData);
+        if(is_string($val)) $val = sprintf("'%s'",$val);
+        $str = $headStr.$val.$footStr;
+
+        return $this->dumpSql($str,$bindData,$mark);
     }
 }

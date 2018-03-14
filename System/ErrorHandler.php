@@ -17,7 +17,7 @@ class ErrorHandler {
     }
 
     static public function onError($severity, $message, $file, $line) {
-        echo $message;
+        echo sprintf("文件【%s】的第【%d】行出现错误:【%s】",$file,$line,$message);
     }
 
     static public function onException(\Exception $exception) {

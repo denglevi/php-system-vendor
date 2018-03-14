@@ -9,6 +9,8 @@
 namespace System\Http;
 
 
+use System\Middleware\IMiddleware;
+
 class Request
 {
     protected $get;
@@ -71,6 +73,7 @@ class Request
 
         if(!in_array($name,['post','get','header','cookie','session','server'])) return false;
 
+        if(is_null($arguments[0]) && 2 === count($arguments)) {$this->$name = null;return true;}
         $key = isset($arguments[0])?$arguments[0]:null;
         $value = isset($arguments[1])?$arguments[1]:null;
 
@@ -133,10 +136,10 @@ class Request
     }
 
     /**
-     * @param \IMiddleware $middleware
+     * @param IMiddleware $middleware
      * @return $this
      */
-    public function with(\IMiddleware $middleware){
+    public function with(IMiddleware $middleware){
         $middleware->handle();
 
         return $this;
